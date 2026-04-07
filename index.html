@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة تقارير المدارس</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', sans-serif; background-color: #f8fafc; }
+        .glass-effect { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .gradient-bg { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <nav class="gradient-bg text-white shadow-lg p-4 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold flex items-center gap-2">
+                <i class="fas fa-school text-yellow-400"></i>
+                بوابة إدارة الـ 300 مدرسة
+            </h1>
+            <div class="flex gap-4">
+                <button onclick="showSection('admin')" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition">لوحة التحكم</button>
+                <button onclick="showSection('school')" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition font-bold">تسجيل مدرسة/تقرير</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto mt-8 p-4">
+
+        <section id="school-section" class="max-w-2xl mx-auto glass-effect p-8 rounded-2xl shadow-xl border border-gray-100">
+            <div class="text-center mb-8">
+                <i class="fas fa-edit text-5xl text-blue-600 mb-4"></i>
+                <h2 class="text-2xl font-bold">إضافة بيانات المدرسة والتقرير</h2>
+                <p class="text-gray-500">يرجى تعبئة الحقول التالية بدقة</p>
+            </div>
+
+            <form id="reportForm" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block mb-2 font-semibold"><i class="fas fa-university ml-2"></i>اسم المدرسة</label>
+                        <input type="text" id="schoolName" required class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold"><i class="fas fa-user-tie ml-2"></i>اسم المنسق</label>
+                        <input type="text" id="coordinator" required class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block mb-2 font-semibold"><i class="fas fa-phone ml-2"></i>رقم الجوال</label>
+                    <input type="tel" id="phone" required class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="05xxxxxxxx">
+                </div>
+
+                <div class="border-t pt-4">
+                    <label class="block mb-2 font-semibold text-blue-700"><i class="fas fa-file-alt ml-2"></i>تقرير العمل</label>
+                    <textarea id="reportContent" rows="4" required class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="اكتب ملخص الإنجازات هنا..."></textarea>
+                </div>
+
+                <button type="submit" class="w-full gradient-bg text-white font-bold py-4 rounded-xl shadow-lg transform hover:scale-[1.02] transition">
+                    <i class="fas fa-paper-plane ml-2"></i>حفظ وإرسال التقرير
+                </button>
+            </form>
+        </section>
+
+        <section id="admin-section" class="hidden">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold text-blue-900 mb-4 md:mb-0">سجل تقارير المدارس</h2>
+                <div class="bg-blue-100 p-4 rounded-lg">
+                    <span class="font-bold text-blue-800">إجمالي التقارير المستلمة: </span>
+                    <span id="reportCount" class="text-2xl text-blue-600">0</span>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto bg-white rounded-2xl shadow-sm border">
+                <table class="w-full text-right">
+                    <thead class="bg-gray-50 text-gray-600">
+                        <tr>
+                            <th class="p-4">المدرسة</th>
+                            <th class="p-4">المنسق</th>
+                            <th class="p-4">التاريخ</th>
+                            <th class="p-4">التقرير</th>
+                            <th class="p-4">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportsTable" class="divide-y">
+                        </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        let reports = [];
+
+        function showSection(section) {
+            document.getElementById('school-section').classList.add('hidden');
+            document.getElementById('admin-section').classList.add('hidden');
+            document.getElementById(section + '-section').classList.remove('hidden');
+        }
+
+        document.getElementById('reportForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const newReport = {
+                id: Date.now(),
+                school: document.getElementById('schoolName').value,
+                coordinator: document.getElementById('coordinator').value,
+                phone: document.getElementById('phone').value,
+                content: document.getElementById('reportContent').value,
+                date: new Date().toLocaleString('ar-SA')
+            };
+
+            reports.unshift(newReport);
+            updateAdminTable();
+            alert('تم حفظ البيانات بنجاح!');
+            this.reset();
+        });
+
+        function updateAdminTable() {
+            const tableBody = document.getElementById('reportsTable');
+            const count = document.getElementById('reportCount');
+            
+            tableBody.innerHTML = '';
+            count.innerText = reports.length;
+
+            reports.forEach(report => {
+                tableBody.innerHTML += `
+                    <tr class="hover:bg-blue-50 transition">
+                        <td class="p-4 font-bold text-blue-700">${report.school}</td>
+                        <td class="p-4">${report.coordinator}<br><span class="text-xs text-gray-400">${report.phone}</span></td>
+                        <td class="p-4 text-sm text-gray-500">${report.date}</td>
+                        <td class="p-4"><p class="truncate w-48 text-sm">${report.content}</p></td>
+                        <td class="p-4">
+                            <button onclick="viewDetail(${report.id})" class="text-blue-500 hover:text-blue-700"><i class="fas fa-eye"></i> عرض</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function viewDetail(id) {
+            const r = reports.find(item => item.id === id);
+            alert(`المدرسة: ${r.school}\nالمنسق: ${r.coordinator}\nالتقرير: ${r.content}`);
+        }
+    </script>
+</body>
+</html>
