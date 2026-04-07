@@ -3,141 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة تقارير المدارس - لوحة التحكم</title>
+    <title>بوابة التطوع المدرسية | الإدارة الذكية</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Cairo', sans-serif; background-color: #f0f4f8; }
-        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        .hidden { display: none; }
-        .input-field { @apply w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition-all; }
-        .btn-main { @apply flex flex-col items-center justify-center p-6 rounded-[2rem] shadow-lg transition-all transform hover:scale-105 font-bold text-lg; }
+        body { font-family: 'Cairo', sans-serif; background: #f4f7fb; color: #1e293b; }
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
+        .btn-action { @apply flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300; }
+        .animate-pop { animation: pop 0.3s ease-out; }
+        @keyframes pop { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .gradient-border { border-image: linear-gradient(to left, #2563eb, #10b981) 1; }
     </style>
 </head>
-<body class="p-4 md:p-10">
+<body class="antialiased">
 
-    <div class="max-w-4xl mx-auto">
-        <header class="text-center mb-10">
-            <h1 class="text-3xl font-black text-blue-900 mb-2">بوابة التقارير الميدانية</h1>
-            <p id="school-title" class="text-blue-600 font-bold">يرجى تسجيل بيانات المدرسة للبدء</p>
-        </header>
+    <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-md shadow-sm border-b">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-blue-600 rounded-lg shadow-blue-200 shadow-lg">
+                    <i class="fas fa-seedling text-white text-xl"></i>
+                </div>
+                <h1 class="text-xl font-black text-slate-800 tracking-tight">نظام إدارة التقارير</h1>
+            </div>
+            <div id="school-badge" class="hidden bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-sm font-bold border border-blue-100 animate-pop">
+                <i class="fas fa-school ml-2"></i> <span id="display-name">---</span>
+            </div>
+        </div>
+    </nav>
 
-        <div id="main-dashboard" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 hidden">
-            <button onclick="showSection('settings-form')" class="btn-main bg-white text-blue-600 border-b-4 border-blue-600">
-                <i class="fas fa-cog text-3xl mb-2"></i> الإعدادات
+    <main class="container mx-auto px-4 py-8 max-w-5xl">
+        
+        <div id="dashboard-controls" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 hidden animate-pop">
+            <button onclick="openModal('settings-modal')" class="flex flex-col items-center p-6 bg-white rounded-3xl shadow-sm border hover:shadow-md transition group">
+                <i class="fas fa-sliders-h text-2xl text-slate-400 group-hover:text-blue-600 mb-2"></i>
+                <span class="text-sm font-bold">تعديل الإعدادات</span>
             </button>
-            <button onclick="showSection('report-form')" class="btn-main bg-blue-600 text-white shadow-blue-200">
-                <i class="fas fa-plus-circle text-3xl mb-2"></i> إضافة تقرير
+            <button onclick="openModal('report-modal')" class="flex flex-col items-center p-6 bg-blue-600 rounded-3xl shadow-lg shadow-blue-100 hover:bg-blue-700 transition group">
+                <i class="fas fa-plus-circle text-2xl text-white mb-2"></i>
+                <span class="text-sm font-bold text-white">إضافة تقرير جديد</span>
             </button>
-            <button onclick="showSection('archive-section')" class="btn-main bg-white text-emerald-600 border-b-4 border-emerald-600">
-                <i class="fas fa-archive text-3xl mb-2"></i> التقارير المرسلة
+            <button onclick="scrollToArchive()" class="flex flex-col items-center p-6 bg-white rounded-3xl shadow-sm border hover:shadow-md transition group">
+                <i class="fas fa-folder-open text-2xl text-slate-400 group-hover:text-emerald-500 mb-2"></i>
+                <span class="text-sm font-bold">الأرشيف الشهري</span>
+            </button>
+            <button class="flex flex-col items-center p-6 bg-white rounded-3xl shadow-sm border hover:shadow-md transition group">
+                <i class="fas fa-chart-pie text-2xl text-slate-400 group-hover:text-purple-500 mb-2"></i>
+                <span class="text-sm font-bold">إحصائياتنا</span>
             </button>
         </div>
 
-        <div class="glass rounded-[2.5rem] shadow-2xl p-8 md:p-12 border border-white">
-            
-            <form id="settings-form" class="space-y-4">
-                <h2 class="text-xl font-bold mb-6 text-gray-700 border-r-4 border-blue-600 pr-3">إعدادات المدرسة</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="text" id="schoolName" placeholder="اسم المدرسة" required class="input-field">
-                    <input type="text" id="district" placeholder="الحي" required class="input-field">
-                    <input type="number" id="ministerialId" placeholder="الرقم الوزاري" required class="input-field">
-                    <input type="text" id="managerName" placeholder="اسم مدير المدرسة" required class="input-field">
-                    <input type="tel" id="managerPhone" placeholder="رقم جوال المدير" required class="input-field">
-                    <input type="text" id="coordinatorName" placeholder="اسم منسق التطوع" required class="input-field">
-                    <input type="tel" id="coordinatorPhone" placeholder="رقم جوال المنسق" required class="input-field">
-                    <input type="email" id="schoolEmail" placeholder="الإيميل الرسمي" required class="input-field">
-                </div>
-                <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold mt-6 shadow-lg">حفظ البيانات والبدء</button>
-            </form>
+        <div id="welcome-hero" class="text-center py-20 bg-white rounded-[3rem] border border-dashed border-slate-200 mb-10 shadow-sm">
+            <img src="https://cdn-icons-png.flaticon.com/512/2231/2231649.png" class="w-32 mx-auto mb-6 opacity-80" alt="school">
+            <h2 class="text-3xl font-black text-slate-800 mb-4">أهلاً بك في منصة التطوع</h2>
+            <p class="text-slate-500 mb-8 max-w-md mx-auto italic underline">لبدء العمل، يرجى ضبط إعدادات المدرسة وحفظ بيانات المنسق والمدير.</p>
+            <button onclick="openModal('settings-modal')" class="bg-slate-900 text-white px-10 py-4 rounded-2xl font-bold hover:bg-blue-600 transition shadow-xl">
+                ابدأ من هنا <i class="fas fa-arrow-left mr-2 text-sm"></i>
+            </button>
+        </div>
 
-            <form id="report-form" class="hidden space-y-4">
-                <h2 class="text-xl font-bold mb-6 text-gray-700 border-r-4 border-blue-600 pr-3">تقرير فرصة تطوعية جديدة</h2>
-                <input type="text" id="oppTitle" placeholder="اسم الفرصة التطوعية" required class="input-field">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="text" id="oppLocation" placeholder="مكان التنفيذ" required class="input-field">
-                    <input type="number" id="studentsCount" placeholder="عدد الطلاب المشاركين" required class="input-field">
+        <div id="archive-section" class="hidden">
+            <div class="flex items-center justify-between mb-8">
+                <h3 class="text-2xl font-black text-slate-800 border-r-4 border-emerald-500 pr-4">سجل المنجزات المرسلة</h3>
+                <div class="text-xs bg-slate-200 px-3 py-1 rounded-full font-bold">مرتبة تنازلياً</div>
+            </div>
+            
+            <div id="reports-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 </div>
-                <input type="text" id="supervisor" placeholder="المشرف المسؤول" required class="input-field">
+        </div>
+
+    </main>
+
+    <div id="settings-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-pop">
+            <div class="p-8 border-b flex justify-between items-center bg-slate-50">
+                <h3 class="font-black text-xl text-slate-800"><i class="fas fa-cog ml-2 text-blue-600"></i> إعدادات المدرسة والمنسق</h3>
+                <button onclick="closeModal('settings-modal')" class="text-slate-400 hover:text-red-500"><i class="fas fa-times-circle text-2xl"></i></button>
+            </div>
+            <form id="settingsForm" class="p-8 space-y-4 max-h-[70vh] overflow-y-auto">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label class="text-xs font-bold text-gray-400 mr-2">من تاريخ</label><input type="date" id="dateFrom" required class="input-field"></div>
-                    <div><label class="text-xs font-bold text-gray-400 mr-2">إلى تاريخ</label><input type="date" id="dateTo" required class="input-field"></div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-400">اسم المدرسة</label>
+                        <input type="text" id="s_name" required class="w-full p-4 bg-slate-100 rounded-2xl border-none focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-400">الحي</label>
+                        <input type="text" id="s_district" required class="w-full p-4 bg-slate-100 rounded-2xl border-none focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
                 </div>
-                <div class="border-2 border-dashed border-gray-200 p-6 rounded-2xl text-center bg-gray-50">
-                    <input type="file" id="photos" multiple accept="image/*" required class="hidden">
-                    <label for="photos" class="cursor-pointer text-gray-500">
-                        <i class="fas fa-camera text-3xl mb-2 text-blue-400"></i>
-                        <p class="font-bold">ارفق 3 صور توثيقية</p>
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-400">الرقم الوزاري</label>
+                    <input type="number" id="s_id" required class="w-full p-4 bg-slate-100 rounded-2xl border-none focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black shadow-lg hover:bg-blue-700 transition">حفظ التغييرات <i class="fas fa-check-double mr-2"></i></button>
+            </form>
+        </div>
+    </div>
+
+    <div id="report-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-3xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-pop">
+            <div class="p-8 border-b flex justify-between items-center bg-blue-600 text-white">
+                <h3 class="font-black text-xl"><i class="fas fa-file-signature ml-2"></i> إضافة تقرير منجز جديد</h3>
+                <button onclick="closeModal('report-modal')" class="text-blue-200 hover:text-white"><i class="fas fa-times-circle text-2xl"></i></button>
+            </div>
+            <form id="reportForm" class="p-8 space-y-5 max-h-[75vh] overflow-y-auto">
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-400 italic">عنوان الفرصة التطوعية</label>
+                    <input type="text" id="r_title" required class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none transition">
+                </div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <input type="text" id="r_place" placeholder="مكان التنفيذ" required class="p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none">
+                    <input type="number" id="r_count" placeholder="عدد الطلاب" required class="p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none">
+                    <input type="text" id="r_supervisor" placeholder="المشرف" required class="p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="text-[10px] font-bold text-slate-400">من تاريخ</label><input type="date" id="r_start" required class="w-full p-4 bg-slate-50 rounded-2xl border-2 border-slate-100"></div>
+                    <div><label class="text-[10px] font-bold text-slate-400">إلى تاريخ</label><input type="date" id="r_end" required class="w-full p-4 bg-slate-50 rounded-2xl border-2 border-slate-100"></div>
+                </div>
+
+                <div class="border-2 border-dashed border-blue-200 p-8 rounded-3xl bg-blue-50/50 text-center relative">
+                    <input type="file" id="r_photos" multiple accept="image/*" required class="hidden">
+                    <label for="r_photos" class="cursor-pointer group">
+                        <i class="fas fa-images text-4xl text-blue-300 group-hover:text-blue-500 transition mb-3 block"></i>
+                        <span class="font-bold text-slate-600 block">ارفع 3 صور توثيقية من الاستديو</span>
+                        <span class="text-[10px] text-slate-400 block">JPEG, PNG - بحد أقصى 5MB لكل صورة</span>
                     </label>
                 </div>
-                <textarea id="details" rows="4" placeholder="تفاصيل العمل المنفذ..." required class="input-field"></textarea>
-                <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg">إرسال التقرير الآن</button>
-            </form>
 
-            <div id="archive-section" class="hidden">
-                <h2 class="text-xl font-bold mb-8 text-gray-700 border-r-4 border-emerald-500 pr-3">سجل التقارير حسب الأشهر</h2>
+                <textarea id="r_details" rows="4" placeholder="اكتب تفاصيل الإنجاز..." required class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none"></textarea>
                 
-                <div id="monthly-archive-list" class="space-y-6">
-                    </div>
-            </div>
-
+                <div class="flex gap-4">
+                    <button type="submit" class="flex-1 bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-emerald-700 transition">إرسال وحفظ التقرير <i class="fas fa-paper-plane mr-2"></i></button>
+                    <button type="reset" class="px-6 bg-slate-100 text-slate-400 rounded-2xl font-bold">مسح</button>
+                </div>
+            </form>
         </div>
     </div>
 
     <script>
-        // دالة التنقل بين الأقسام
-        function showSection(id) {
-            const sections = ['settings-form', 'report-form', 'archive-section'];
-            sections.forEach(s => document.getElementById(s).classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
+        // دوال المودال
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        // عند حفظ الإعدادات
+        document.getElementById('settingsForm').onsubmit = function(e) {
+            e.preventDefault();
+            const sName = document.getElementById('s_name').value;
+            localStorage.setItem('school_name', sName);
+            
+            Swal.fire({ title: 'رائع!', text: 'تم حفظ بيانات المدرسة بنجاح', icon: 'success', confirmButtonText: 'حسناً', confirmButtonColor: '#2563eb' });
+            
+            closeModal('settings-modal');
+            setupDashboard(sName);
+        };
+
+        function setupDashboard(name) {
+            document.getElementById('welcome-hero').classList.add('hidden');
+            document.getElementById('dashboard-controls').classList.remove('hidden');
+            document.getElementById('archive-section').classList.remove('hidden');
+            document.getElementById('school-badge').classList.remove('hidden');
+            document.getElementById('display-name').innerText = name;
         }
 
-        // عند حفظ الإعدادات لأول مرة
-        document.getElementById('settings-form').onsubmit = function(e) {
+        // عند إرسال تقرير جديد
+        document.getElementById('reportForm').onsubmit = function(e) {
             e.preventDefault();
-            const schoolName = document.getElementById('schoolName').value;
-            document.getElementById('school-title').innerText = `لوحة تحكم: ${schoolName}`;
-            document.getElementById('main-dashboard').classList.remove('hidden');
-            showSection('report-form'); // الانتقال التلقائي لإضافة تقرير
-        };
-
-        // عند إرسال تقرير
-        document.getElementById('report-form').onsubmit = function(e) {
-            e.preventDefault();
-            // محاكاة حفظ التقرير
-            alert("تم حفظ التقرير في أرشيفك بنجاح!");
+            const title = document.getElementById('r_title').value;
             
-            // إضافة التقرير للأرشيف (تجريبي)
-            addToArchive();
-
-            // إخفاء النموذج والعودة للأزرار فقط
-            showSection('archive-section');
+            // إضافة كرت التقرير للأرشيف
+            addReportCard(title);
+            
+            Swal.fire({ title: 'تم الإرسال!', text: 'وصل تقريرك لسحابة الإدارة بنجاح', icon: 'success' });
+            closeModal('report-modal');
+            document.getElementById('reportForm').reset();
         };
 
-        function addToArchive() {
-            const list = document.getElementById('monthly-archive-list');
+        function addReportCard(title) {
+            const grid = document.getElementById('reports-grid');
             const now = new Date();
-            const monthNames = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
-            const currentMonth = monthNames[now.getMonth()] + " " + now.getFullYear();
-
-            // إنشاء قسم الشهر إذا لم يكن موجوداً
-            list.innerHTML = `
-                <div class="border rounded-2xl overflow-hidden shadow-sm">
-                    <div class="bg-emerald-50 p-4 font-bold text-emerald-700 border-b flex justify-between">
-                        <span>${currentMonth}</span>
-                        <i class="fas fa-chevron-down"></i>
+            const card = `
+                <div class="bg-white p-6 rounded-[2rem] border-r-8 border-blue-500 shadow-sm hover:shadow-xl transition-all animate-pop relative group">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span class="text-[10px] bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold uppercase tracking-wider">${now.toLocaleString('ar-SA', {month: 'long'})} ${now.getFullYear()}</span>
+                            <h4 class="font-black text-slate-800 text-lg mt-2">${title}</h4>
+                        </div>
+                        <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                            <button title="استعراض" class="btn-action bg-slate-100 text-slate-600 hover:bg-blue-600 hover:text-white"><i class="fas fa-eye text-xs"></i></button>
+                            <button title="تعديل" class="btn-action bg-slate-100 text-slate-600 hover:bg-amber-500 hover:text-white"><i class="fas fa-pen text-xs"></i></button>
+                            <button title="حذف" onclick="confirmDelete(this)" class="btn-action bg-slate-100 text-slate-600 hover:bg-red-500 hover:text-white"><i class="fas fa-trash-alt text-xs"></i></button>
+                        </div>
                     </div>
-                    <div class="p-4 bg-white text-sm text-gray-600">
-                        <ul>
-                            <li class="py-2 border-b flex justify-between">
-                                <span><i class="fas fa-file-alt ml-2 text-emerald-400"></i> ${document.getElementById('oppTitle').value}</span>
-                                <span class="text-xs text-gray-400">${now.toLocaleDateString('ar-SA')}</span>
-                            </li>
-                        </ul>
+                    <div class="flex gap-2 mb-4 overflow-hidden rounded-xl">
+                        <div class="w-full h-16 bg-slate-200 animate-pulse"></div>
+                        <div class="w-full h-16 bg-slate-200 animate-pulse"></div>
+                        <div class="w-full h-16 bg-slate-200 animate-pulse"></div>
+                    </div>
+                    <div class="flex justify-between items-center text-[11px] text-slate-400 font-bold border-t pt-4">
+                        <span><i class="far fa-clock ml-1"></i> ${now.toLocaleDateString('ar-SA')}</span>
+                        <span class="text-emerald-500"><i class="fas fa-check-circle"></i> تم الأرشفة</span>
                     </div>
                 </div>
-            ` + list.innerHTML;
+            `;
+            grid.insertAdjacentHTML('afterbegin', card);
+        }
+
+        function confirmDelete(btn) {
+            Swal.fire({
+                title: 'هل أنت متأكد؟',
+                text: "لن تتمكن من استعادة هذا التقرير من سحابة الإدارة!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'نعم، احذفه',
+                cancelButtonText: 'إلغاء'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    btn.closest('.animate-pop').remove();
+                    Swal.fire('تم الحذف!', 'تمت إزالة التقرير نهائياً.', 'success');
+                }
+            })
         }
     </script>
 </body>
